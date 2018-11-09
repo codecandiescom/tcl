@@ -2109,7 +2109,7 @@ UpdateStringOfList(
 #   define LOCAL_SIZE 64
     char localFlags[LOCAL_SIZE], *flagPtr = NULL;
     int numElems, i, length, bytesNeeded = 0;
-    const char *elem;
+    const char *elem, *start;
     char *dst;
     Tcl_Obj **elemPtrs;
     List *listRepPtr;
@@ -2168,7 +2168,7 @@ UpdateStringOfList(
      * Pass 2: copy into string rep buffer.
      */
 
-    dst = Tcl_InitStringRep(listPtr, NULL, bytesNeeded);
+    start = dst = Tcl_InitStringRep(listPtr, NULL, bytesNeeded);
     TclOOM(dst, bytesNeeded);
     for (i = 0; i < numElems; i++) {
 	flagPtr[i] |= (i ? TCL_DONT_QUOTE_HASH : 0);
@@ -2176,7 +2176,9 @@ UpdateStringOfList(
 	dst += TclConvertElement(elem, length, dst, flagPtr[i]);
 	*dst++ = ' ';
     }
-    (void) Tcl_InitStringRep(listPtr, NULL, bytesNeeded);
+
+    /* Set the string length to what was actually written, the safe choice */
+    (void) Tcl_InitStringRep(listPtr, NULL, dst - 1 - start);
 
     if (flagPtr != localFlags) {
 	Tcl_Free(flagPtr);
